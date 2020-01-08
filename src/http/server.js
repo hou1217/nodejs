@@ -1,17 +1,35 @@
-const http = require('http')
-const fs = require('fs')
+const http = require('http')//http模块
+const fs = require('fs')//fs模块
+const path = require('path')//path模块
+const mimeModel = require('./modules/getmime')
 
-const server = http.createServer()
-server.on('request',(req,res)=>{
+const server = http.createServer((req,res)=>{
   console.log(req.method);
-  console.log(req.url);
-  if(req.url == '/'){
-    res.write('hello\n');
-    res.end();
-  }else{
-    fs.readFile('.'+req.url,(err,data)=>{
-      if(err) throw err;
-      res.end(data);
+  let pathname = req.url;
+  let extname = path.extname(pathname);
+  console.log(pathname);
+  if(pathname == '/'){
+    pathname = '/index.html'
+  }
+  if(pathname != '/favicon.ico'){
+    fs.readFile('./static' + pathname,(err,data)=>{
+      if(err) {
+        console.error('404');
+        fs.readFile('./static/404.html',(err,data)=>{
+          res.writeHead(404,{
+            "Content-Type": "text/html;charset='utf-8'"
+          });
+          res.write(data);
+          res.end();
+        })
+      }else{
+        let mime = mimeModel.getMime(extname)
+        res.writeHead(200,{
+          "Content-Type": mime+";charset='utf-8'"
+        });
+        res.write(data);
+        res.end();
+      }
     })
   }
 })
